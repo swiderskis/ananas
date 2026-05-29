@@ -18,7 +18,7 @@ enable_testing()
 
 add_executable(
   test
-  src/chess.cpp
+  src/game.cpp
 )
 
 target_link_libraries(
