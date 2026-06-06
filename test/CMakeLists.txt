@@ -19,6 +19,8 @@ enable_testing()
 add_executable(
   test
   src/game.cpp
+  src/search.cpp
+  src/square.cpp
 )
 
 target_link_libraries(

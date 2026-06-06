@@ -8,6 +8,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 add_library(
   chesslib
   src/game.cpp
+  src/move.cpp
+  src/search.cpp
 )
 
 target_include_directories(
