@@ -110,6 +110,18 @@ auto Game::board(Piece piece, Side side) const -> Bitboard
     std::unreachable();
 }
 
+auto Game::board(Side side) const -> Bitboard
+{
+    switch (side) {
+    case Side::White:
+        return white_pawns_ | white_knights_ | white_bishops_ | white_rooks_ | white_queens_ | white_king_;
+    case Side::Black:
+        return black_pawns_ | black_knights_ | black_bishops_ | black_rooks_ | black_queens_ | black_king_;
+    }
+
+    std::unreachable();
+}
+
 auto Game::board_mut(Piece piece, Side side) -> Bitboard &
 {
     switch (side) {

@@ -1,10 +1,12 @@
 #include "chesslib/search.hpp"
 
+#include "chesslib/game.hpp"
 #include "chesslib/piece.hpp"
 #include "chesslib/square.hpp"
 
 #include <ranges>
 #include <type_traits>
+#include <utility>
 #include <vector>
 
 using namespace chess;
@@ -26,6 +28,7 @@ constexpr std::array SQUARES{
 auto find_pawn_moves(std::vector<Move> && moves, Game game) -> std::vector<Move>;
 auto find_pawn_single_push(std::vector<Move> && moves, Game game) -> std::vector<Move>;
 auto find_pawn_double_push(std::vector<Move> && moves, Game game) -> std::vector<Move>;
+auto find_pawn_captures(std::vector<Move> && moves, Game game) -> std::vector<Move>;
 } // namespace
 
 auto search::find_moves(Game game) -> std::vector<Move>
@@ -44,6 +47,7 @@ auto find_pawn_moves(std::vector<Move> && moves, Game game) -> std::vector<Move>
 {
     moves = find_pawn_single_push(std::move(moves), game);
     moves = find_pawn_double_push(std::move(moves), game);
+    moves = find_pawn_captures(std::move(moves), game);
 
     return std::move(moves);
 }
@@ -77,6 +81,29 @@ auto find_pawn_double_push(std::vector<Move> && moves, Game game) -> std::vector
         | std::views::filter([start_rank](auto s) { return square::is_in(s, start_rank); })
         | std::views::transform(get_target)
         | std::views::transform([](auto m) { return Move{ m.first, m.second, Piece::Pawn }; });
+    moves.insert_range(moves.end(), pawn_moves);
+
+    return std::move(moves);
+}
+
+auto find_pawn_captures(std::vector<Move> && moves, Game game) -> std::vector<Move>
+{
+    auto const capture_dirs
+        = (game.to_move() == Side::White ? std::array{ Dir::NW, Dir::NE } : std::array{ Dir::SW, Dir::SE });
+    auto const pawn_board = game.board(Piece::Pawn, game.to_move());
+    auto const opponent_side = (game.to_move() == Side::White ? Side::Black : Side::White);
+    auto const opponent_board = game.board(opponent_side);
+    auto const get_targets_view = [capture_dirs](auto s) {
+        return capture_dirs
+            | std::views::transform([s](auto d) { return std::make_pair(s, square::at(s, d)); })
+            | std::views::filter([](auto m) { return m.second.has_value(); });
+    };
+    auto pawn_moves = SQUARES
+        | std::views::filter([pawn_board](auto s) { return pawn_board.is_set(s); })
+        | std::views::transform(get_targets_view)
+        | std::views::join
+        | std::views::filter([opponent_board](auto m) { return opponent_board.is_set(m.second.value()); })
+        | std::views::transform([](auto m) { return Move{ m.first, m.second.value(), Piece::Pawn }; });
     moves.insert_range(moves.end(), pawn_moves);
 
     return std::move(moves);

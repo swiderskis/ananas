@@ -20,11 +20,15 @@ enum class Side : uint8_t
 class Bitboard
 {
 public:
+    constexpr Bitboard() = default;
+    constexpr Bitboard(uint64_t bitboard);
+
     [[nodiscard]] constexpr auto board() const -> uint64_t { return board_; }
     [[nodiscard]] constexpr auto is_set(Square square) const -> bool;
 
     constexpr auto operator|=(Square square) -> void { board_ |= 1uz << std::to_underlying(square); }
     constexpr auto operator^=(Square square) -> void { board_ &= ~(1uz << std::to_underlying(square)); }
+    constexpr auto operator|(Bitboard bitboard) const -> Bitboard { return { board_ | bitboard.board_ }; }
 
 private:
     uint64_t board_{ 0 };
@@ -45,6 +49,7 @@ public:
     auto make_move(Move move) -> void;
     [[nodiscard]] auto at(Square square) const -> std::optional<std::tuple<Piece, Side>>;
     [[nodiscard]] auto board(Piece piece, Side side) const -> Bitboard;
+    [[nodiscard]] auto board(Side side) const -> Bitboard;
     [[nodiscard]] auto to_move() const -> Side { return to_move_; }
 
     friend class GameBuilder;
@@ -82,6 +87,11 @@ private:
 // *********************************************************************************************************************
 //                                             INLINE & TEMPLATE DEFINITIONS
 // *********************************************************************************************************************
+
+constexpr Bitboard::Bitboard(uint64_t board)
+    : board_{ board }
+{
+}
 
 constexpr auto Bitboard::is_set(Square square) const -> bool
 {
