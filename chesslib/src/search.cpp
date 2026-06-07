@@ -29,6 +29,7 @@ auto find_pawn_moves(std::vector<Move> && moves, Game game) -> std::vector<Move>
 auto find_pawn_single_push(std::vector<Move> && moves, Game game) -> std::vector<Move>;
 auto find_pawn_double_push(std::vector<Move> && moves, Game game) -> std::vector<Move>;
 auto find_pawn_captures(std::vector<Move> && moves, Game game) -> std::vector<Move>;
+auto find_knight_moves(std::vector<Move> && moves, Game game) -> std::vector<Move>;
 } // namespace
 
 auto search::find_moves(Game game) -> std::vector<Move>
@@ -48,6 +49,7 @@ auto find_pawn_moves(std::vector<Move> && moves, Game game) -> std::vector<Move>
     moves = find_pawn_single_push(std::move(moves), game);
     moves = find_pawn_double_push(std::move(moves), game);
     moves = find_pawn_captures(std::move(moves), game);
+    moves = find_knight_moves(std::move(moves), game);
 
     return std::move(moves);
 }
@@ -105,6 +107,27 @@ auto find_pawn_captures(std::vector<Move> && moves, Game game) -> std::vector<Mo
         | std::views::filter([opponent_board](auto m) { return opponent_board.is_set(m.second.value()); })
         | std::views::transform([](auto m) { return Move{ m.first, m.second.value(), Piece::Pawn }; });
     moves.insert_range(moves.end(), pawn_moves);
+
+    return std::move(moves);
+}
+
+auto find_knight_moves(std::vector<Move> && moves, Game game) -> std::vector<Move>
+{
+    // TODO reflection ;)
+    static constexpr std::array knight_dirs{ KnightDir::NNW, KnightDir::NNE, KnightDir::ENE, KnightDir::ESE,
+                                             KnightDir::SSE, KnightDir::SSW, KnightDir::WSW, KnightDir::WNW };
+    auto const knight_board = game.board(Piece::Knight, game.to_move());
+    auto const get_targets_view = [](auto s) {
+        return knight_dirs
+            | std::views::transform([s](auto d) { return std::make_pair(s, square::at(s, d)); })
+            | std::views::filter([](auto m) { return m.second.has_value(); });
+    };
+    auto knight_moves = SQUARES
+        | std::views::filter([knight_board](auto s) { return knight_board.is_set(s); })
+        | std::views::transform(get_targets_view)
+        | std::views::join
+        | std::views::transform([](auto m) { return Move{ m.first, m.second.value(), Piece::Knight }; });
+    moves.insert_range(moves.end(), knight_moves);
 
     return std::move(moves);
 }

@@ -63,11 +63,24 @@ enum class Dir : uint8_t
     W,
 };
 
+enum class KnightDir : uint8_t
+{
+    NNW,
+    NNE,
+    ENE,
+    ESE,
+    SSE,
+    SSW,
+    WSW,
+    WNW,
+};
+
 namespace square
 {
 constexpr auto is_in(Square square, Rank rank) -> bool;
 constexpr auto is_in(Square square, File file) -> bool;
 constexpr auto at(Square square, Dir dir) -> std::optional<Square>;
+constexpr auto at(Square square, KnightDir dir) -> std::optional<Square>;
 
 // *********************************************************************************************************************
 //                                             INLINE & TEMPLATE DEFINITIONS
@@ -154,6 +167,41 @@ constexpr auto at(Square square, Dir dir) -> std::optional<Square>
         return square_conversion(7, Rank::One, File::A);
     case Dir::W:
         return square_conversion(-1, std::nullopt, File::A);
+    }
+
+    std::unreachable();
+}
+
+constexpr auto at(Square square, KnightDir dir) -> std::optional<Square>
+{
+    auto const square_conversion =
+        [square]<typename Ranks, typename Files>(int32_t adjustment, Ranks excl_ranks, Files excl_files) {
+            auto const excluded_rank
+                = std::ranges::any_of(excl_ranks, [square](auto r) { return square::is_in(square, r); });
+            auto const excluded_file
+                = std::ranges::any_of(excl_files, [square](auto f) { return square::is_in(square, f); });
+            auto const square_idx = std::to_underlying(square);
+            return (excluded_rank || excluded_file ? std::nullopt
+                                                   : std::make_optional(static_cast<Square>(square_idx + adjustment)));
+        };
+
+    switch (dir) {
+    case KnightDir::NNW:
+        return square_conversion(-17, std::array{ Rank::Seven, Rank::Eight }, std::array{ File::A });
+    case KnightDir::NNE:
+        return square_conversion(-15, std::array{ Rank::Seven, Rank::Eight }, std::array{ File::H });
+    case KnightDir::ENE:
+        return square_conversion(-6, std::array{ Rank::Eight }, std::array{ File::G, File::H });
+    case KnightDir::ESE:
+        return square_conversion(10, std::array{ Rank::One }, std::array{ File::G, File::H });
+    case KnightDir::SSE:
+        return square_conversion(17, std::array{ Rank::One, Rank::Two }, std::array{ File::H });
+    case KnightDir::SSW:
+        return square_conversion(15, std::array{ Rank::One, Rank::Two }, std::array{ File::A });
+    case KnightDir::WSW:
+        return square_conversion(6, std::array{ Rank::One }, std::array{ File::A, File::B });
+    case KnightDir::WNW:
+        return square_conversion(-10, std::array{ Rank::Eight }, std::array{ File::A, File::B });
     }
 
     std::unreachable();

@@ -6,6 +6,8 @@
 
 #include <algorithm>
 #include <gtest/gtest.h>
+#include <inplace_vector>
+#include <ranges>
 
 using namespace chess;
 
@@ -141,3 +143,50 @@ TEST(Search, PawnCaptureBlack)
     EXPECT_FALSE(std::ranges::contains(moves, unexpected_move2));
     EXPECT_EQ(moves.size(), 3); // includes push
 }
+
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+#endif
+
+TEST(Search, KnightMoves)
+{
+    auto const knight_test = []<typename Targets>(Square source, Targets targets) {
+        auto const piece = Piece::Knight;
+        auto const side = Side::White;
+        auto const game = [=]() {
+            GameBuilder game_builder;
+            game_builder.set_square(piece, side, source);
+            return game_builder.build();
+        }();
+        auto const moves = search::find_moves(game);
+        auto const expected_moves = targets
+            | std::views::transform([source](auto t) { return Move{ source, t, piece }; })
+            | std::ranges::to<std::inplace_vector<Move, targets.size()>>();
+        EXPECT_TRUE(std::ranges::all_of(expected_moves, [moves](auto m) { return std::ranges::contains(moves, m); }));
+    };
+
+    knight_test(
+        Square::E4,
+        std::array{ Square::D6, Square::F6, Square::G5, Square::G3, Square::F2, Square::D2, Square::C3, Square::C5 });
+    knight_test(Square::A8, std::array{ Square::C7, Square::B6 });
+    knight_test(Square::B7, std::array{ Square::D8, Square::D6, Square::C5, Square::A5 });
+    knight_test(Square::E8, std::array{ Square::G7, Square::F6, Square::D6, Square::C7 });
+    knight_test(Square::E7, std::array{ Square::G8, Square::G6, Square::F5, Square::D5, Square::C6, Square::C8 });
+    knight_test(Square::H8, std::array{ Square::G6, Square::F7 });
+    knight_test(Square::G7, std::array{ Square::H5, Square::F5, Square::E6, Square::E8 });
+    knight_test(Square::H4, std::array{ Square::G2, Square::F3, Square::F5, Square::G6 });
+    knight_test(Square::G4, std::array{ Square::H2, Square::F2, Square::E3, Square::E5, Square::F6, Square::H6 });
+    knight_test(Square::H1, std::array{ Square::F2, Square::G3 });
+    knight_test(Square::G2, std::array{ Square::E1, Square::E3, Square::F4, Square::H4 });
+    knight_test(Square::E1, std::array{ Square::C2, Square::D3, Square::F3, Square::G2 });
+    knight_test(Square::E2, std::array{ Square::C1, Square::C3, Square::D4, Square::F4, Square::G3, Square::G1 });
+    knight_test(Square::A1, std::array{ Square::B3, Square::C2 });
+    knight_test(Square::B2, std::array{ Square::A4, Square::C4, Square::D3, Square::D1 });
+    knight_test(Square::A4, std::array{ Square::B6, Square::C5, Square::C3, Square::B2 });
+    knight_test(Square::B4, std::array{ Square::A6, Square::C6, Square::D5, Square::D3, Square::C2, Square::A2 });
+}
+
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
