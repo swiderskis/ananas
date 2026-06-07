@@ -30,6 +30,7 @@ auto find_pawn_single_push(std::vector<Move> && moves, Game game) -> std::vector
 auto find_pawn_double_push(std::vector<Move> && moves, Game game) -> std::vector<Move>;
 auto find_pawn_captures(std::vector<Move> && moves, Game game) -> std::vector<Move>;
 auto find_knight_moves(std::vector<Move> && moves, Game game) -> std::vector<Move>;
+auto find_king_moves(std::vector<Move> && moves, Game game) -> std::vector<Move>;
 } // namespace
 
 auto search::find_moves(Game game) -> std::vector<Move>
@@ -50,6 +51,7 @@ auto find_pawn_moves(std::vector<Move> && moves, Game game) -> std::vector<Move>
     moves = find_pawn_double_push(std::move(moves), game);
     moves = find_pawn_captures(std::move(moves), game);
     moves = find_knight_moves(std::move(moves), game);
+    moves = find_king_moves(std::move(moves), game);
 
     return std::move(moves);
 }
@@ -128,6 +130,26 @@ auto find_knight_moves(std::vector<Move> && moves, Game game) -> std::vector<Mov
         | std::views::join
         | std::views::transform([](auto m) { return Move{ m.first, m.second.value(), Piece::Knight }; });
     moves.insert_range(moves.end(), knight_moves);
+
+    return std::move(moves);
+}
+
+auto find_king_moves(std::vector<Move> && moves, Game game) -> std::vector<Move>
+{
+    // TODO reflection ;)
+    static constexpr std::array dirs{ Dir::NW, Dir::N, Dir::NE, Dir::E, Dir::SE, Dir::S, Dir::SW, Dir::W };
+    auto const king_board = game.board(Piece::King, game.to_move());
+    auto const get_targets_view = [](auto s) {
+        return dirs
+            | std::views::transform([s](auto d) { return std::make_pair(s, square::at(s, d)); })
+            | std::views::filter([](auto m) { return m.second.has_value(); });
+    };
+    auto king_moves = SQUARES
+        | std::views::filter([king_board](auto s) { return king_board.is_set(s); })
+        | std::views::transform(get_targets_view)
+        | std::views::join
+        | std::views::transform([](auto m) { return Move{ m.first, m.second.value(), Piece::King }; });
+    moves.insert_range(moves.end(), king_moves);
 
     return std::move(moves);
 }

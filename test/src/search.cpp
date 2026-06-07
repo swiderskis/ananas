@@ -187,6 +187,36 @@ TEST(Search, KnightMoves)
     knight_test(Square::B4, std::array{ Square::A6, Square::C6, Square::D5, Square::D3, Square::C2, Square::A2 });
 }
 
+TEST(Search, KingMoves)
+{
+    auto const king_test = []<typename Targets>(Square source, Targets targets) {
+        auto const piece = Piece::King;
+        auto const side = Side::White;
+        auto const game = [=]() {
+            GameBuilder game_builder;
+            game_builder.set_square(piece, side, source);
+            return game_builder.build();
+        }();
+        auto const moves = search::find_moves(game);
+        auto const expected_moves = targets
+            | std::views::transform([source](auto t) { return Move{ source, t, piece }; })
+            | std::ranges::to<std::inplace_vector<Move, targets.size()>>();
+        EXPECT_TRUE(std::ranges::all_of(expected_moves, [moves](auto m) { return std::ranges::contains(moves, m); }));
+    };
+
+    king_test(
+        Square::E4,
+        std::array{ Square::D5, Square::E5, Square::F5, Square::F4, Square::F3, Square::E3, Square::D3, Square::D4 });
+    king_test(Square::A8, std::array{ Square::B8, Square::B7, Square::A7 });
+    king_test(Square::E8, std::array{ Square::F8, Square::F7, Square::E7, Square::D7, Square::D8 });
+    king_test(Square::H8, std::array{ Square::H7, Square::G7, Square::G8 });
+    king_test(Square::H4, std::array{ Square::H3, Square::G3, Square::G4, Square::G5, Square::H5 });
+    king_test(Square::H1, std::array{ Square::G1, Square::G2, Square::H2 });
+    king_test(Square::E1, std::array{ Square::D1, Square::D2, Square::E2, Square::F2, Square::F1 });
+    king_test(Square::A1, std::array{ Square::A2, Square::B2, Square::B1 });
+    king_test(Square::A4, std::array{ Square::A5, Square::B5, Square::B4, Square::B3, Square::A3 });
+}
+
 #ifdef __clang__
 #pragma clang diagnostic pop
 #endif
