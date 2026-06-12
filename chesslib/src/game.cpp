@@ -2,13 +2,14 @@
 
 #include "chesslib/piece.hpp"
 
-#include <array>
 #include <optional>
 #include <ranges>
 #include <tuple>
 #include <utility>
 
 using namespace chess;
+
+namespace sebenum = seb::enumerator;
 
 Game::Game(StartPosT /*start_pos*/)
 {
@@ -59,12 +60,7 @@ Game::Game(StartPosT /*start_pos*/)
 
 auto Game::at(Square square) const -> std::optional<std::tuple<Piece, Side>>
 {
-    // TODO reflection ;)
-    static constexpr std::array pieces{ Piece::Pawn, Piece::Knight, Piece::Bishop,
-                                        Piece::Rook, Piece::Queen,  Piece::King };
-    static constexpr std::array sides{ Side::White, Side::Black };
-
-    auto board_view = std::views::cartesian_product(pieces, sides)
+    auto board_view = std::views::cartesian_product(sebenum::vals<Piece>(), sebenum::vals<Side>())
         | std::views::drop_while([&](auto v) { return !board(std::get<0>(v), std::get<1>(v)).is_set(square); });
 
     return (board_view.empty() ? std::nullopt : std::make_optional(*board_view.begin()));

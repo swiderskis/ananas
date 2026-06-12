@@ -11,20 +11,10 @@
 
 using namespace chess;
 
+namespace sebenum = seb::enumerator;
+
 namespace
 {
-// TODO reflection ;)
-constexpr std::array SQUARES{
-    Square::A8, Square::B8, Square::C8, Square::D8, Square::E8, Square::F8, Square::G8, Square::H8,
-    Square::A7, Square::B7, Square::C7, Square::D7, Square::E7, Square::F7, Square::G7, Square::H7,
-    Square::A6, Square::B6, Square::C6, Square::D6, Square::E6, Square::F6, Square::G6, Square::H6,
-    Square::A5, Square::B5, Square::C5, Square::D5, Square::E5, Square::F5, Square::G5, Square::H5,
-    Square::A4, Square::B4, Square::C4, Square::D4, Square::E4, Square::F4, Square::G4, Square::H4,
-    Square::A3, Square::B3, Square::C3, Square::D3, Square::E3, Square::F3, Square::G3, Square::H3,
-    Square::A2, Square::B2, Square::C2, Square::D2, Square::E2, Square::F2, Square::G2, Square::H2,
-    Square::A1, Square::B1, Square::C1, Square::D1, Square::E1, Square::F1, Square::G1, Square::H1,
-};
-
 auto find_pawn_moves(std::vector<Move> && moves, Game game) -> std::vector<Move>;
 auto find_pawn_single_push(std::vector<Move> && moves, Game game) -> std::vector<Move>;
 auto find_pawn_double_push(std::vector<Move> && moves, Game game) -> std::vector<Move>;
@@ -60,7 +50,7 @@ auto find_pawn_single_push(std::vector<Move> && moves, Game game) -> std::vector
 {
     auto const push_dir = (game.to_move() == Side::White ? Dir::N : Dir::S);
     auto const pawn_board = game.board(Piece::Pawn, game.to_move());
-    auto pawn_moves = SQUARES
+    auto pawn_moves = sebenum::vals<Square>()
         | std::views::filter([pawn_board](auto s) { return pawn_board.is_set(s); })
         | std::views::transform([push_dir](auto s) { return std::make_pair(s, square::at(s, push_dir)); })
         | std::views::filter([](auto m) { return m.second.has_value(); })
@@ -80,7 +70,7 @@ auto find_pawn_double_push(std::vector<Move> && moves, Game game) -> std::vector
         auto const target = square::at(single_push, push_dir).value();
         return std::make_pair(s, target);
     };
-    auto pawn_moves = SQUARES
+    auto pawn_moves = sebenum::vals<Square>()
         | std::views::filter([pawn_board](auto s) { return pawn_board.is_set(s); })
         | std::views::filter([start_rank](auto s) { return square::is_in(s, start_rank); })
         | std::views::transform(get_target)
@@ -102,7 +92,7 @@ auto find_pawn_captures(std::vector<Move> && moves, Game game) -> std::vector<Mo
             | std::views::transform([s](auto d) { return std::make_pair(s, square::at(s, d)); })
             | std::views::filter([](auto m) { return m.second.has_value(); });
     };
-    auto pawn_moves = SQUARES
+    auto pawn_moves = sebenum::vals<Square>()
         | std::views::filter([pawn_board](auto s) { return pawn_board.is_set(s); })
         | std::views::transform(get_targets_view)
         | std::views::join
@@ -115,16 +105,13 @@ auto find_pawn_captures(std::vector<Move> && moves, Game game) -> std::vector<Mo
 
 auto find_knight_moves(std::vector<Move> && moves, Game game) -> std::vector<Move>
 {
-    // TODO reflection ;)
-    static constexpr std::array knight_dirs{ KnightDir::NNW, KnightDir::NNE, KnightDir::ENE, KnightDir::ESE,
-                                             KnightDir::SSE, KnightDir::SSW, KnightDir::WSW, KnightDir::WNW };
     auto const knight_board = game.board(Piece::Knight, game.to_move());
     auto const get_targets_view = [](auto s) {
-        return knight_dirs
+        return sebenum::vals<KnightDir>()
             | std::views::transform([s](auto d) { return std::make_pair(s, square::at(s, d)); })
             | std::views::filter([](auto m) { return m.second.has_value(); });
     };
-    auto knight_moves = SQUARES
+    auto knight_moves = sebenum::vals<Square>()
         | std::views::filter([knight_board](auto s) { return knight_board.is_set(s); })
         | std::views::transform(get_targets_view)
         | std::views::join
@@ -136,15 +123,13 @@ auto find_knight_moves(std::vector<Move> && moves, Game game) -> std::vector<Mov
 
 auto find_king_moves(std::vector<Move> && moves, Game game) -> std::vector<Move>
 {
-    // TODO reflection ;)
-    static constexpr std::array dirs{ Dir::NW, Dir::N, Dir::NE, Dir::E, Dir::SE, Dir::S, Dir::SW, Dir::W };
     auto const king_board = game.board(Piece::King, game.to_move());
     auto const get_targets_view = [](auto s) {
-        return dirs
+        return sebenum::vals<Dir>()
             | std::views::transform([s](auto d) { return std::make_pair(s, square::at(s, d)); })
             | std::views::filter([](auto m) { return m.second.has_value(); });
     };
-    auto king_moves = SQUARES
+    auto king_moves = sebenum::vals<Square>()
         | std::views::filter([king_board](auto s) { return king_board.is_set(s); })
         | std::views::transform(get_targets_view)
         | std::views::join

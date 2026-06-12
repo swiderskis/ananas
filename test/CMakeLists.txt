@@ -28,6 +28,7 @@ target_link_libraries(
   PRIVATE
   GTest::gtest_main
   chesslib
+  seblib
 )
 
 target_compile_options(
@@ -37,6 +38,7 @@ target_compile_options(
   -Wextra
   -Werror
   -Wpedantic
+  $<$<CXX_COMPILER_ID:GNU>:-freflection>
 )
 
 include(GoogleTest)

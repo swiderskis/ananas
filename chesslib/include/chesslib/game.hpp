@@ -3,6 +3,7 @@
 
 #include "chesslib/move.hpp"
 #include "chesslib/square.hpp"
+#include "seblib/enum.hpp"
 
 #include <cstdint>
 #include <optional>
@@ -83,11 +84,28 @@ public:
 private:
     Game game_;
 };
+} // namespace chess
 
 // *********************************************************************************************************************
 //                                             INLINE & TEMPLATE DEFINITIONS
 // *********************************************************************************************************************
 
+// temporary until clang++ supports reflection
+#ifdef __clang__
+namespace seb::enumerator
+{
+using namespace chess;
+
+template <>
+consteval auto vals<Side>()
+{
+    return std::array{ Side::White, Side::Black };
+}
+} // namespace seb::enumerator
+#endif
+
+namespace chess
+{
 constexpr Bitboard::Bitboard(uint64_t board)
     : board_{ board }
 {

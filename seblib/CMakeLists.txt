@@ -6,26 +6,18 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 add_library(
-  chesslib
-  src/game.cpp
-  src/move.cpp
-  src/search.cpp
+  seblib
+  src/seblib.cpp
 )
 
 target_include_directories(
-  chesslib
+  seblib
   PUBLIC
   include/
 )
 
-target_link_libraries(
-  chesslib
-  PRIVATE
-  seblib
-)
-
 target_compile_options(
-  chesslib
+  seblib
   PRIVATE
   -Wall
   -Wextra

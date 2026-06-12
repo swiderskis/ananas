@@ -1,6 +1,8 @@
 #ifndef CHESSLIB_SQUARE_HPP
 #define CHESSLIB_SQUARE_HPP
 
+#include "seblib/enum.hpp"
+
 #include <algorithm>
 #include <array>
 #include <cstdint>
@@ -81,56 +83,96 @@ constexpr auto is_in(Square square, Rank rank) -> bool;
 constexpr auto is_in(Square square, File file) -> bool;
 constexpr auto at(Square square, Dir dir) -> std::optional<Square>;
 constexpr auto at(Square square, KnightDir dir) -> std::optional<Square>;
+} // namespace square
+} // namespace chess
 
 // *********************************************************************************************************************
 //                                             INLINE & TEMPLATE DEFINITIONS
 // *********************************************************************************************************************
+
+// temporary until clang++ supports reflection
+#ifdef __clang__
+namespace seb::enumerator
+{
+using namespace chess;
+
+template <>
+consteval auto vals<Square>()
+{
+    return std::array{
+        Square::A8, Square::B8, Square::C8, Square::D8, Square::E8, Square::F8, Square::G8, Square::H8,
+        Square::A7, Square::B7, Square::C7, Square::D7, Square::E7, Square::F7, Square::G7, Square::H7,
+        Square::A6, Square::B6, Square::C6, Square::D6, Square::E6, Square::F6, Square::G6, Square::H6,
+        Square::A5, Square::B5, Square::C5, Square::D5, Square::E5, Square::F5, Square::G5, Square::H5,
+        Square::A4, Square::B4, Square::C4, Square::D4, Square::E4, Square::F4, Square::G4, Square::H4,
+        Square::A3, Square::B3, Square::C3, Square::D3, Square::E3, Square::F3, Square::G3, Square::H3,
+        Square::A2, Square::B2, Square::C2, Square::D2, Square::E2, Square::F2, Square::G2, Square::H2,
+        Square::A1, Square::B1, Square::C1, Square::D1, Square::E1, Square::F1, Square::G1, Square::H1,
+    };
+}
+
+template <>
+consteval auto vals<Rank>()
+{
+    return std::array{
+        Rank::Eight, Rank::Seven, Rank::Six, Rank::Five, Rank::Four, Rank::Three, Rank::Two, Rank::One,
+    };
+}
+
+template <>
+consteval auto vals<File>()
+{
+    return std::array{
+        File::A, File::B, File::C, File::D, File::E, File::F, File::G, File::H,
+    };
+}
+
+template <>
+consteval auto vals<Dir>()
+{
+    return std::array{
+        Dir::NW, Dir::N, Dir::NE, Dir::E, Dir::SE, Dir::S, Dir::SW, Dir::W,
+    };
+}
+
+template <>
+consteval auto vals<KnightDir>()
+{
+    return std::array{
+        KnightDir::NNW, KnightDir::NNE, KnightDir::ENE, KnightDir::ESE,
+        KnightDir::SSE, KnightDir::SSW, KnightDir::WSW, KnightDir::WNW,
+    };
+}
+} // namespace seb::enumerator
+#endif
 
 #ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #endif
 
+namespace chess::square
+{
+namespace sebenum = seb::enumerator;
+
 constexpr auto is_in(Square square, Rank rank) -> bool
 {
-    // TODO reflection ;)
-    static constexpr std::array squares{
-        Square::A8, Square::B8, Square::C8, Square::D8, Square::E8, Square::F8, Square::G8, Square::H8,
-        Square::A7, Square::B7, Square::C7, Square::D7, Square::E7, Square::F7, Square::G7, Square::H7,
-        Square::A6, Square::B6, Square::C6, Square::D6, Square::E6, Square::F6, Square::G6, Square::H6,
-        Square::A5, Square::B5, Square::C5, Square::D5, Square::E5, Square::F5, Square::G5, Square::H5,
-        Square::A4, Square::B4, Square::C4, Square::D4, Square::E4, Square::F4, Square::G4, Square::H4,
-        Square::A3, Square::B3, Square::C3, Square::D3, Square::E3, Square::F3, Square::G3, Square::H3,
-        Square::A2, Square::B2, Square::C2, Square::D2, Square::E2, Square::F2, Square::G2, Square::H2,
-        Square::A1, Square::B1, Square::C1, Square::D1, Square::E1, Square::F1, Square::G1, Square::H1,
-    };
-
     auto const in_rank = [rank](auto s) {
         auto const min = std::to_underlying(rank) * 8;
         auto const max = min + 7;
         return std::to_underlying(s) >= min && std::to_underlying(s) <= max;
     };
-    auto const rank_squares = squares | std::views::filter(in_rank) | std::ranges::to<std::inplace_vector<Square, 8>>();
+    auto const rank_squares
+        = sebenum::vals<Square>() | std::views::filter(in_rank) | std::ranges::to<std::inplace_vector<Square, 8>>();
 
     return std::ranges::contains(rank_squares, square);
 }
 
 constexpr auto is_in(Square square, File file) -> bool
 {
-    // TODO reflection ;)
-    static constexpr std::array squares{
-        Square::A8, Square::B8, Square::C8, Square::D8, Square::E8, Square::F8, Square::G8, Square::H8,
-        Square::A7, Square::B7, Square::C7, Square::D7, Square::E7, Square::F7, Square::G7, Square::H7,
-        Square::A6, Square::B6, Square::C6, Square::D6, Square::E6, Square::F6, Square::G6, Square::H6,
-        Square::A5, Square::B5, Square::C5, Square::D5, Square::E5, Square::F5, Square::G5, Square::H5,
-        Square::A4, Square::B4, Square::C4, Square::D4, Square::E4, Square::F4, Square::G4, Square::H4,
-        Square::A3, Square::B3, Square::C3, Square::D3, Square::E3, Square::F3, Square::G3, Square::H3,
-        Square::A2, Square::B2, Square::C2, Square::D2, Square::E2, Square::F2, Square::G2, Square::H2,
-        Square::A1, Square::B1, Square::C1, Square::D1, Square::E1, Square::F1, Square::G1, Square::H1,
-    };
-
     auto const in_file = [file](auto s) { return std::to_underlying(s) % 8 == std::to_underlying(file); };
-    auto const file_squares = squares | std::views::filter(in_file) | std::ranges::to<std::inplace_vector<Square, 8>>();
+    auto const file_squares
+        = sebenum::vals<Square>() | std::views::filter(in_file) | std::ranges::to<std::inplace_vector<Square, 8>>();
 
     return std::ranges::contains(file_squares, square);
 }
@@ -206,7 +248,6 @@ constexpr auto at(Square square, KnightDir dir) -> std::optional<Square>
 
     std::unreachable();
 }
-} // namespace square
-} // namespace chess
+} // namespace chess::square
 
 #endif
